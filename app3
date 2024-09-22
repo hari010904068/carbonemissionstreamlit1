@@ -1,0 +1,76 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import joblib
+import matplotlib.pyplot as plt
+import os
+
+# Load the trained model
+@st.cache_resource
+def load_model():
+    if not os.path.exists('carbon_emission_model.joblib'):
+        st.error("Trained model not found. Please run 'train_model.py' first.")
+        return None
+    model = joblib.load('carbon_emission_model.joblib')
+    return model
+
+model = load_model()
+
+# Constants (same as used in training)
+CO2_PER_KWH = 0.0005  # kg CO2 per kWh
+KWH_PER_CPU = 0.01    # kWh per CPU utilization unit per hour
+
+# Streamlit App
+st.set_page_config(page_title="Carbon Emission Predictor", layout="centered")
+st.title("📊 Carbon Emission Predictor")
+
+st.markdown("""
+This application predicts the **carbon emissions** based on **CPU utilization** and **time taken** using a machine learning model.
+""")
+
+# Input Widgets
+st.sidebar.header("Input Parameters")
+
+cpu_utilization = st.sidebar.slider("📈 CPU Utilization (%)", 0, 100, 50, step=1)
+time_taken = st.sidebar.number_input("⏱️ Time Taken (hours)", min_value=0.0, max_value=24.0, value=1.0, step=0.1)
+
+# Prepare input for prediction
+input_data = pd.DataFrame({
+    'CPU_Utilization': [cpu_utilization],
+    'Time_Taken': [time_taken]
+})
+
+# Display Inputs
+st.subheader("🔍 Input Parameters")
+st.write(input_data)
+
+# Prediction
+if model:
+    predicted_emission = model.predict(input_data)[0]
+    st.subheader("📈 Predicted Carbon Emissions")
+    st.write(f"**{predicted_emission:.6f} kg CO₂**")
+
+    # Visualization
+    st.subheader("📊 Visualization")
+    
+    # Bar Chart for Input vs Prediction
+    fig, ax = plt.subplots(figsize=(6,4))
+    categories = ['CPU Utilization (%)', 'Time Taken (hours)', 'Predicted Carbon Emissions (kg CO₂)']
+    values = [cpu_utilization, time_taken, predicted_emission]
+    colors = ['skyblue', 'salmon', 'lightgreen']
+    ax.bar(categories, values, color=colors)
+    ax.set_ylim(0, max(values)*1.2)
+    for i, v in enumerate(values):
+        ax.text(i, v + max(values)*0.02, f"{v:.4f}", ha='center')
+    st.pyplot(fig)
+
+    # Optional: Show Feature Importances
+    if os.path.exists('feature_importances.png'):
+        st.subheader("📊 Feature Importances")
+        st.image('feature_importances.png', use_column_width=True)
+
+    # Additional Information
+    st.markdown("""
+    ---
+    **Note:** The model was trained on synthetic data. For more accurate predictions, use real-world data reflecting actual CPU usage and carbon emission metrics.
+    """)
