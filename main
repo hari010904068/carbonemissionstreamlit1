@@ -1,0 +1,43 @@
+import streamlit as st
+import psutil
+import time
+import numpy as np
+
+# Function to estimate carbon emission
+def estimate_carbon_emission(cpu_utilization, time_taken, emission_factor=0.0002):
+    # Estimating energy consumption (in kWh) assuming a typical CPU power consumption of 100 watts
+    # You can adjust this power value based on your machine's specs
+    power_consumption_per_hour = 100 * (cpu_utilization / 100)  # in watts
+    energy_consumed_kWh = (power_consumption_per_hour * (time_taken / 3600)) / 1000  # in kWh
+    
+    # Carbon emission in grams based on emission factor (default: 200g CO2/kWh)
+    carbon_emission = energy_consumed_kWh * emission_factor * 1000  # in grams
+    
+    return carbon_emission
+
+# Streamlit app UI
+st.title("Carbon Emission Estimator for Code Execution")
+
+# Input: CPU utilization and execution time
+cpu_utilization = st.slider("Estimated CPU Utilization (%)", 0, 100, 50)
+time_taken = st.slider("Execution Time (in seconds)", 1, 3600, 60)
+emission_factor = st.slider("Carbon Emission Factor (g CO2/kWh)", 50, 500, 200)
+
+# Start code execution simulation (or you can directly use real-time data from a code execution)
+start_button = st.button("Start Simulation")
+
+if start_button:
+    st.write("Simulating Code Execution...")
+    start_time = time.time()
+    
+    # Simulating some CPU utilization
+    time.sleep(time_taken)  # Replace this with real code execution
+    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    
+    # Estimate the carbon emission
+    carbon_emission = estimate_carbon_emission(cpu_utilization, elapsed_time, emission_factor)
+    
+    st.write(f"Code Execution Time: {elapsed_time:.2f} seconds")
+    st.write(f"Estimated Carbon Emission: {carbon_emission:.2f} grams of CO2")
