@@ -1,0 +1,63 @@
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, r2_score
+import joblib
+import matplotlib.pyplot as plt
+
+# Constants for carbon emissions
+CO2_PER_KWH = 0.0005  # kg CO2 per kWh
+KWH_PER_CPU = 0.01    # kWh per CPU utilization unit per hour
+
+def generate_synthetic_data(n_samples=1000, random_state=42):
+    np.random.seed(random_state)
+    cpu_utilization = np.random.uniform(10, 100, n_samples)  # CPU utilization between 10% and 100%
+    time_taken = np.random.uniform(0.5, 10, n_samples)        # Time taken between 0.5 and 10 hours
+    # Calculate carbon emission
+    carbon_emission = (cpu_utilization / 100) * KWH_PER_CPU * time_taken * CO2_PER_KWH
+    # Add some noise
+    noise = np.random.normal(0, 0.00005, n_samples)
+    carbon_emission += noise
+    data = pd.DataFrame({
+        'CPU_Utilization': cpu_utilization,
+        'Time_Taken': time_taken,
+        'Carbon_Emission': carbon_emission
+    })
+    return data
+
+def train_model(data):
+    X = data[['CPU_Utilization', 'Time_Taken']]
+    y = data['Carbon_Emission']
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Initialize and train the model
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    
+    # Predict and evaluate
+    y_pred = model.predict(X_test)
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    print(f"Model Performance on Test Set:")
+    print(f"Mean Absolute Error (MAE): {mae:.6f} kg CO2")
+    print(f"R^2 Score: {r2:.4f}")
+    
+    # Feature importance
+    feature_importances = model.feature_importances_
+    plt.figure(figsize=(8,6))
+    plt.bar(['CPU_Utilization', 'Time_Taken'], feature_importances, color=['skyblue', 'salmon'])
+    plt.title('Feature Importances')
+    plt.ylabel('Importance')
+    plt.savefig('feature_importances.png')
+    plt.close()
+    
+    # Save the trained model
+    joblib.dump(model, 'carbon_emission_model.joblib')
+    print("Model trained and saved as 'carbon_emission_model.joblib'.")
+
+if __name__ == "__main__":
+    data = generate_synthetic_data()
+    train_model(data)
