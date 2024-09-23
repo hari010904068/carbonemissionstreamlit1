@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import time
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.svm import SVR
@@ -149,21 +148,21 @@ for model_name, y_pred in model_predictions.items():
 
 # Bar chart for performance comparison
 st.subheader("📊 Bar Chart: Model Performance Comparison")
-bar_chart = go.Figure()
-bar_chart.add_trace(go.Bar(
+bar_chart_performance = go.Figure()
+bar_chart_performance.add_trace(go.Bar(
     x=performance_df['Model'], 
     y=performance_df['Mean Squared Error (MSE)'],
     name='Mean Squared Error',
     marker_color='lightskyblue'
 ))
-bar_chart.add_trace(go.Bar(
+bar_chart_performance.add_trace(go.Bar(
     x=performance_df['Model'], 
     y=performance_df['R² Score'],
     name='R² Score',
     marker_color='lightgreen'
 ))
-bar_chart.update_layout(barmode='group', template='plotly_dark', title="Model Performance: MSE vs R² Score")
-st.plotly_chart(bar_chart, use_container_width=True)
+bar_chart_performance.update_layout(barmode='group', template='plotly_dark', title="Model Performance: MSE vs R² Score")
+st.plotly_chart(bar_chart_performance, use_container_width=True)
 
 # Design Diagram of the Logic
 st.subheader("🧩 Design Diagram of the App Logic")
