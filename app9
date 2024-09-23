@@ -7,7 +7,6 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error, r2_score
 import plotly.express as px
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
 from graphviz import Digraph
 
 # Custom CSS for sidebar and app layout
@@ -30,14 +29,7 @@ st.markdown(
         background-color: black;
         color: white;
     }
-    .css-1v3fvcr {
-        background-color: black;
-    }
-    .css-1v3fvcr .stSlider > div > div {
-        background-color: black;
-        color: white;
-    }
-    .css-1v3fvcr .stSlider > div > div > div > div {
+    .stSlider > div > div {
         background-color: black;
         color: white;
     }
@@ -47,6 +39,7 @@ st.markdown(
 )
 
 # Set up Matplotlib to use a black background with white text
+import matplotlib.pyplot as plt
 plt.style.use('dark_background')
 
 # Title of the app
@@ -58,71 +51,54 @@ st.sidebar.header("CI/CD Pipeline Mock Parameters")
 execution_time = st.sidebar.slider("Execution Time (minutes)", 1, 120, 30)
 cpu_usage = st.sidebar.slider("Average CPU Usage (%)", 1, 100, 50)
 
-# Mock Jenkins CI/CD execution time and CPU usage data
+# Generate mock data
 data_points = 100
 np.random.seed(42)
-time_data = np.random.normal(loc=execution_time, scale=5, size=data_points).clip(1, 120)
-cpu_data = np.random.normal(loc=cpu_usage, scale=10, size=data_points).clip(1, 100)
+time_data = np.clip(np.random.normal(loc=execution_time, scale=5, size=data_points), 1, 120)
+cpu_data = np.clip(np.random.normal(loc=cpu_usage, scale=10, size=data_points), 1, 100)
 
 # Create a DataFrame for visualization
 mock_data = pd.DataFrame({
     'Execution Time (minutes)': time_data,
     'CPU Usage (%)': cpu_data,
 })
-
-# Define the target variable (carbon emission)
 mock_data['Carbon Emission (kg CO2)'] = (mock_data['Execution Time (minutes)'] + mock_data['CPU Usage (%)']) * 0.05
 
-# Split data into features and target
+# Define features and target variable
 X = mock_data[['Execution Time (minutes)', 'CPU Usage (%)']]
 y = mock_data['Carbon Emission (kg CO2)']
 
-# Simulate training models and compare them
-st.subheader("📊 Model Training and Comparison")
-st.write("Multiple models are trained to predict carbon emissions based on CPU usage and execution time.")
-
-# Train multiple models
+# Initialize models and dictionaries for performance and predictions
 models = {
     'Linear Regression': LinearRegression(),
     'Random Forest Regressor': RandomForestRegressor(n_estimators=100, random_state=42),
     'Support Vector Regressor': SVR(),
     'Gradient Boosting Regressor': GradientBoostingRegressor(random_state=42)
 }
-
-# Dictionary to store model performance
-model_performance = {
-    'Model': [],
-    'Mean Squared Error (MSE)': [],
-    'R² Score': []
-}
-
-# Dictionary to store model predictions
+model_performance = []
 model_predictions = {}
 
-# Train each model and compute metrics
+# Train models and evaluate
 for model_name, model in models.items():
-    # Train the model
     model.fit(X, y)
-    # Make predictions
     y_pred = model.predict(X)
-    # Compute metrics
     mse = mean_squared_error(y, y_pred)
     r2 = r2_score(y, y_pred)
-    # Store results
-    model_performance['Model'].append(model_name)
-    model_performance['Mean Squared Error (MSE)'].append(mse)
-    model_performance['R² Score'].append(r2)
-    # Store predictions
+    model_performance.append({
+        'Model': model_name,
+        'Mean Squared Error (MSE)': mse,
+        'R² Score': r2
+    })
     model_predictions[model_name] = y_pred
 
-# Convert the performance dictionary to a DataFrame
+# Convert performance data to DataFrame
 performance_df = pd.DataFrame(model_performance)
 
-# Display the model comparison table
+# Display model performance
 st.write("### Model Comparison")
 st.dataframe(performance_df)
 
-# Visualize predictions of each model (interactive Plotly)
+# Plot model predictions
 st.write("### Model Prediction Visualization")
 for model_name, y_pred in model_predictions.items():
     fig = px.scatter(
@@ -139,7 +115,7 @@ for model_name, y_pred in model_predictions.items():
     )
     st.plotly_chart(fig, use_container_width=True)
 
-# Bar chart for performance comparison
+# Plot model performance comparison
 st.subheader("📊 Bar Chart: Model Performance Comparison")
 bar_chart_performance = go.Figure()
 bar_chart_performance.add_trace(go.Bar(
@@ -157,7 +133,7 @@ bar_chart_performance.add_trace(go.Bar(
 bar_chart_performance.update_layout(barmode='group', template='plotly_dark', title="Model Performance: MSE vs R² Score")
 st.plotly_chart(bar_chart_performance, use_container_width=True)
 
-# Identify the best model based on the lowest MSE
+# Identify and display the best model
 best_model_name = performance_df.loc[performance_df['Mean Squared Error (MSE)'].idxmin(), 'Model']
 st.write(f"### Best Model Based on Lowest MSE: {best_model_name}")
 
@@ -167,38 +143,27 @@ st.write("The design diagram below illustrates the flow of data and processes in
 
 # Create design diagram using Graphviz
 design_diagram = Digraph(comment='App Logic Design')
+nodes = ['Start', 'Input CI/CD Parameters', 'Generate Mock Data', 'Train Models', 'Evaluate Models', 'Visualize Predictions', 'Compare Models', 'Show Flowchart', 'End']
+for node in nodes:
+    design_diagram.node(node[:1], node)
 
-# Define nodes in the diagram
-design_diagram.node('A', 'Start')
-design_diagram.node('B', 'Input CI/CD Parameters')
-design_diagram.node('C', 'Generate Mock Data')
-design_diagram.node('D', 'Train Models')
-design_diagram.node('E', 'Evaluate Models')
-design_diagram.node('F', 'Visualize Predictions')
-design_diagram.node('G', 'Compare Models')
-design_diagram.node('H', 'Show Flowchart')
-design_diagram.node('I', 'End')
+edges = [(nodes[i], nodes[i+1]) for i in range(len(nodes)-1)]
+for start, end in edges:
+    design_diagram.edge(start, end)
 
-# Define edges between nodes
-design_diagram.edge('A', 'B')
-design_diagram.edge('B', 'C')
-design_diagram.edge('C', 'D')
-design_diagram.edge('D', 'E')
-design_diagram.edge('E', 'F')
-design_diagram.edge('F', 'G')
-design_diagram.edge('G', 'H')
-design_diagram.edge('H', 'I')
-
-# Display design diagram in Streamlit
 st.graphviz_chart(design_diagram)
 
 # Compare CI/CD carbon emissions with car emissions
 st.subheader("🚗 Comparison of Carbon Emissions: CI/CD vs Car Running Time")
 st.write("This section compares the carbon emissions from the Jenkins CI/CD pipeline with emissions from a car based on running time.")
 
-# Create a DataFrame to combine emissions for comparison
+# Mock data for car emissions
+car_running_time = np.linspace(1, 120, data_points)
+car_emission = car_running_time * 0.12
+
+# Create a DataFrame for comparison
 comparison_df = pd.DataFrame({
-    'Execution Time (minutes)': mock_data['Execution Time (minutes)'],
+    'Execution Time (minutes)': time_data,
     'CI/CD Emission (kg CO2)': mock_data['Carbon Emission (kg CO2)'],
     'Car Running Time (minutes)': car_running_time,
     'Car Emission (kg CO2)': car_emission
