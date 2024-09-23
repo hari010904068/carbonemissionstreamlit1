@@ -1,0 +1,89 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Custom CSS for background and app layout
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #e5f5e0;  /* Light green background */
+        color: #333;
+    }
+    .stApp {
+        background-color: #ffffff;  /* White background for the app content */
+    }
+    .stSidebar {
+        background-color: #d4edda;  /* Light green for sidebar */
+    }
+    .stTextInput input {
+        background-color: #ffffff;
+    }
+    .stSlider > div > div {
+        background-color: #ffffff;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Title of the app
+st.title("🧮 Carbon Emission Calculator")
+
+# Sidebar inputs
+st.sidebar.header("Input Parameters")
+execution_time = st.sidebar.slider("Execution Time (minutes)", 1, 120, 30)
+cpu_usage = st.sidebar.slider("CPU Usage (%)", 1, 100, 50)
+
+# Carbon emission calculation (simple formula: emission = (time * cpu_usage) * factor)
+def calculate_emission(time, usage, factor=0.05):
+    return (time * usage) * factor
+
+# Calculate emission
+carbon_emission = calculate_emission(execution_time, cpu_usage)
+
+# Display the results
+st.write(f"### Calculation Results")
+st.write(f"**Execution Time:** {execution_time} minutes")
+st.write(f"**CPU Usage:** {cpu_usage}%")
+st.write(f"**Estimated Carbon Emission:** {carbon_emission:.2f} kg CO2")
+
+# Generate mock data for visualization
+data_points = 50
+np.random.seed(42)
+time_data = np.random.uniform(1, 120, data_points)
+cpu_data = np.random.uniform(1, 100, data_points)
+emission_data = calculate_emission(time_data, cpu_data)
+
+# Create DataFrame
+df = pd.DataFrame({
+    'Execution Time (minutes)': time_data,
+    'CPU Usage (%)': cpu_data,
+    'Carbon Emission (kg CO2)': emission_data
+})
+
+# Display the DataFrame
+st.write("### Data Visualization")
+st.dataframe(df)
+
+# Plot the data
+st.subheader("Data Visualization")
+
+fig, ax = plt.subplots()
+scatter = ax.scatter(df['Execution Time (minutes)'], df['CPU Usage (%)'], c=df['Carbon Emission (kg CO2)'], cmap='viridis', s=100)
+ax.set_xlabel('Execution Time (minutes)')
+ax.set_ylabel('CPU Usage (%)')
+ax.set_title('Carbon Emission Scatter Plot')
+cbar = plt.colorbar(scatter, ax=ax)
+cbar.set_label('Carbon Emission (kg CO2)')
+st.pyplot(fig)
+
+# Display insights
+st.subheader("🔍 Insights")
+st.write("""
+Based on the calculation, the carbon emission is estimated using a simple formula that considers both execution time and CPU usage. To optimize carbon emissions:
+- **Reduce Execution Time**: Shorter job durations lead to lower emissions.
+- **Optimize CPU Usage**: Efficient use of CPU resources reduces overall emissions.
+- **Use Energy-Efficient Hardware**: Consider using hardware with lower energy consumption.
+""")
