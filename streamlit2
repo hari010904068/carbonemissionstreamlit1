@@ -1,0 +1,93 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import time
+from sklearn.linear_model import LinearRegression
+
+# Setting up the page config and background color
+st.set_page_config(page_title="Jenkins CI/CD Emissions Tracker", layout="wide")
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #d0f0c0;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Title of the app
+st.title("🔧 Jenkins CI/CD Mock Execution - Carbon Emission Tracker 🌱")
+st.write("This app mocks Jenkins CI/CD execution time and CPU usage, simulates a model, and computes linear carbon emissions based on CPU and time usage.")
+
+# Sidebar input widgets for mocking CI/CD parameters
+st.sidebar.header("CI/CD Pipeline Mock Parameters")
+execution_time = st.sidebar.slider("Execution Time (minutes)", 1, 120, 30)
+cpu_usage = st.sidebar.slider("Average CPU Usage (%)", 1, 100, 50)
+
+# Mock Jenkins CI/CD execution time and CPU usage data
+data_points = 100
+np.random.seed(42)
+time_data = np.random.normal(loc=execution_time, scale=5, size=data_points).clip(1, 120)
+cpu_data = np.random.normal(loc=cpu_usage, scale=10, size=data_points).clip(1, 100)
+
+# Create a DataFrame for visualization
+mock_data = pd.DataFrame({
+    'Execution Time (minutes)': time_data,
+    'CPU Usage (%)': cpu_data,
+})
+
+# Simulate training a model to compute carbon emissions
+st.subheader("📊 Mock Data Generation and Model Training")
+st.write("The model will compute carbon emissions based on CPU usage and execution time.")
+
+# Simulate training time
+progress_bar = st.progress(0)
+train_time = 3  # in seconds
+for i in range(train_time):
+    progress_bar.progress((i + 1) / train_time)
+    time.sleep(1)
+
+# Linear model for carbon emissions
+st.write("### Training a Linear Model for Carbon Emissions")
+X = mock_data[['Execution Time (minutes)', 'CPU Usage (%)']]
+y = X.sum(axis=1) * 0.05  # Simplified assumption: emissions = 0.05 * (CPU + Time)
+
+model = LinearRegression()
+model.fit(X, y)
+
+mock_data['Carbon Emission (kg CO2)'] = model.predict(X)
+
+# Visualization: Execution Time vs CPU Usage vs Carbon Emission
+st.subheader("🔍 CI/CD Execution and Carbon Emission Visualization")
+st.write("Below is the visualization of mocked execution time, CPU usage, and corresponding carbon emissions:")
+
+# Matplotlib chart visualization
+fig, ax = plt.subplots()
+scatter = ax.scatter(
+    mock_data['Execution Time (minutes)'], 
+    mock_data['CPU Usage (%)'], 
+    c=mock_data['Carbon Emission (kg CO2)'], 
+    cmap='coolwarm', 
+    alpha=0.7
+)
+plt.colorbar(scatter, label='Carbon Emission (kg CO2)')
+plt.xlabel('Execution Time (minutes)')
+plt.ylabel('CPU Usage (%)')
+plt.title('Execution Time vs CPU Usage vs Carbon Emission')
+
+st.pyplot(fig)
+
+# Line chart for carbon emissions
+st.write("### Carbon Emission over Time")
+st.line_chart(mock_data[['Carbon Emission (kg CO2)']])
+
+# Show summary statistics
+st.write("### Summary Statistics")
+st.write(mock_data.describe())
+
+# Final message
+st.success("Mock CI/CD pipeline simulation complete! Check the visualizations and data above.")
+
