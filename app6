@@ -1,0 +1,179 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+import time
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error, r2_score
+import plotly.express as px
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+from graphviz import Digraph
+
+# Custom CSS for sidebar and app layout
+st.markdown(
+    """
+    <style>
+    body {
+        background: url('https://cdn.pixabay.com/photo/2015/12/01/20/28/forest-1072828_1280.jpg');
+        background-size: cover;
+        background-attachment: fixed;
+        color: white;
+    }
+    .stApp {
+        background-color: rgba(0, 100, 0, 0.4);
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: #d0f0c0;
+    }
+    .stSidebar {
+        background-color: black;
+        color: white;
+    }
+    .css-1v3fvcr {
+        background-color: black;
+    }
+    .css-1v3fvcr .stSlider > div > div {
+        background-color: black;
+        color: white;
+    }
+    .css-1v3fvcr .stSlider > div > div > div > div {
+        background-color: black;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Set up Matplotlib to use a black background with white text
+plt.style.use('dark_background')
+
+# Title of the app
+st.title("🌲 Jenkins CI/CD Mock Execution - Carbon Emission Tracker 🌿")
+st.write("This app mocks Jenkins CI/CD execution time and CPU usage, simulates multiple models, and computes linear carbon emissions based on CPU and time usage.")
+
+# Sidebar input widgets for mocking CI/CD parameters
+st.sidebar.header("CI/CD Pipeline Mock Parameters")
+execution_time = st.sidebar.slider("Execution Time (minutes)", 1, 120, 30)
+cpu_usage = st.sidebar.slider("Average CPU Usage (%)", 1, 100, 50)
+
+# Mock Jenkins CI/CD execution time and CPU usage data
+data_points = 100
+np.random.seed(42)
+time_data = np.random.normal(loc=execution_time, scale=5, size=data_points).clip(1, 120)
+cpu_data = np.random.normal(loc=cpu_usage, scale=10, size=data_points).clip(1, 100)
+
+# Create a DataFrame for visualization
+mock_data = pd.DataFrame({
+    'Execution Time (minutes)': time_data,
+    'CPU Usage (%)': cpu_data,
+})
+
+# Define the target variable (carbon emission)
+mock_data['Carbon Emission (kg CO2)'] = (mock_data['Execution Time (minutes)'] + mock_data['CPU Usage (%)']) * 0.05
+
+# Split data into features and target
+X = mock_data[['Execution Time (minutes)', 'CPU Usage (%)']]
+y = mock_data['Carbon Emission (kg CO2)']
+
+# Simulate training models and compare them
+st.subheader("📊 Model Training and Comparison")
+st.write("Multiple models are trained to predict carbon emissions based on CPU usage and execution time.")
+
+# Train multiple models
+models = {
+    'Linear Regression': LinearRegression(),
+    'Random Forest Regressor': RandomForestRegressor(n_estimators=100, random_state=42),
+    'Support Vector Regressor': SVR(),
+    'Gradient Boosting Regressor': GradientBoostingRegressor(random_state=42)
+}
+
+# Dictionary to store model performance
+model_performance = {
+    'Model': [],
+    'Mean Squared Error (MSE)': [],
+    'R² Score': []
+}
+
+# Train each model and compute metrics
+for model_name, model in models.items():
+    # Train the model
+    model.fit(X, y)
+    # Make predictions
+    y_pred = model.predict(X)
+    # Compute metrics
+    mse = mean_squared_error(y, y_pred)
+    r2 = r2_score(y, y_pred)
+    # Store results
+    model_performance['Model'].append(model_name)
+    model_performance['Mean Squared Error (MSE)'].append(mse)
+    model_performance['R² Score'].append(r2)
+
+# Convert the performance dictionary to a DataFrame
+performance_df = pd.DataFrame(model_performance)
+
+# Display the model comparison table
+st.write("### Model Comparison")
+st.dataframe(performance_df)
+
+# Visualize predictions of each model (interactive Plotly)
+st.write("### Model Prediction Visualization")
+for model_name, model in models.items():
+    y_pred = model.predict(X)
+    fig = px.scatter(
+        x=mock_data['Execution Time (minutes)'], 
+        y=mock_data['CPU Usage (%)'], 
+        color=y_pred, 
+        title=f'{model_name} - Execution Time vs CPU Usage vs Predicted Carbon Emission',
+        labels={'x': 'Execution Time (minutes)', 'y': 'CPU Usage (%)', 'color': 'Predicted Carbon Emission (kg CO2)'},
+        template='plotly_dark'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# Bar chart for performance comparison
+st.subheader("📊 Bar Chart: Model Performance Comparison")
+bar_chart = go.Figure()
+bar_chart.add_trace(go.Bar(
+    x=performance_df['Model'], 
+    y=performance_df['Mean Squared Error (MSE)'],
+    name='Mean Squared Error',
+    marker_color='lightskyblue'
+))
+bar_chart.add_trace(go.Bar(
+    x=performance_df['Model'], 
+    y=performance_df['R² Score'],
+    name='R² Score',
+    marker_color='lightgreen'
+))
+bar_chart.update_layout(barmode='group', template='plotly_dark', title="Model Performance: MSE vs R² Score")
+st.plotly_chart(bar_chart, use_container_width=True)
+
+# Flowchart for Jenkins CI/CD Pipeline Execution using Graphviz
+st.subheader("🛠️ Flowchart of Jenkins CI/CD Execution")
+st.write("The flowchart below summarizes the key steps of a typical Jenkins CI/CD pipeline execution.")
+
+# Create flowchart using graphviz
+flowchart = Digraph(comment='CI/CD Pipeline')
+
+# Define nodes in the flowchart
+flowchart.node('A', 'Start Jenkins Job')
+flowchart.node('B', 'Checkout Code')
+flowchart.node('C', 'Build Code')
+flowchart.node('D', 'Run Tests')
+flowchart.node('E', 'Deploy to Environment')
+flowchart.node('F', 'End')
+
+# Define edges between nodes
+flowchart.edge('A', 'B')
+flowchart.edge('B', 'C')
+flowchart.edge('C', 'D')
+flowchart.edge('D', 'E')
+flowchart.edge('E', 'F')
+
+# Display flowchart in Streamlit
+st.graphviz_chart(flowchart)
+
+# Final message
+st.success("Mock CI/CD pipeline simulation and model comparison complete! Check the visualizations and data above.")
