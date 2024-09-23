@@ -1,0 +1,159 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error, r2_score
+import plotly.express as px
+import plotly.graph_objects as go
+
+# Custom CSS for sidebar and app layout
+st.markdown(
+    """
+    <style>
+    body {
+        background: url('https://cdn.pixabay.com/photo/2015/09/18/19/03/forest-944130_1280.jpg'); /* Background image with green trees */
+        background-size: cover;
+        background-attachment: fixed;
+        color: white;
+    }
+    .stApp {
+        background-color: rgba(0, 77, 0, 0.6);  /* Green background with transparency */
+    }
+    .stSidebar {
+        background-color: black;
+        color: white;
+    }
+    .stSlider > div > div {
+        background-color: black;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Set up Matplotlib to use a dark background with white text
+import matplotlib.pyplot as plt
+plt.style.use('dark_background')
+
+# Title of the app
+st.title("🌲 Jenkins CI/CD Carbon Emission Tracker 🌿")
+st.write("This app simulates Jenkins CI/CD execution, computes carbon emissions, and visualizes the data.")
+
+# Sidebar input widgets for mocking CI/CD parameters
+st.sidebar.header("CI/CD Pipeline Parameters")
+execution_time = st.sidebar.slider("Execution Time (minutes)", 1, 120, 30)
+cpu_usage = st.sidebar.slider("Average CPU Usage (%)", 1, 100, 50)
+
+# Generate mock data
+data_points = 100
+np.random.seed(42)
+time_data = np.clip(np.random.normal(loc=execution_time, scale=5, size=data_points), 1, 120)
+cpu_data = np.clip(np.random.normal(loc=cpu_usage, scale=10, size=data_points), 1, 100)
+
+# Create a DataFrame for visualization
+mock_data = pd.DataFrame({
+    'Execution Time (minutes)': time_data,
+    'CPU Usage (%)': cpu_data,
+})
+mock_data['Carbon Emission (kg CO2)'] = (mock_data['Execution Time (minutes)'] + mock_data['CPU Usage (%)']) * 0.05
+
+# Show the DataFrame in the app
+st.write("### Test Data")
+st.dataframe(mock_data)
+
+# Define features and target variable
+X = mock_data[['Execution Time (minutes)', 'CPU Usage (%)']]
+y = mock_data['Carbon Emission (kg CO2)']
+
+# Initialize models and dictionaries for performance and predictions
+models = {
+    'Linear Regression': LinearRegression(),
+    'Random Forest Regressor': RandomForestRegressor(n_estimators=100, random_state=42),
+    'Support Vector Regressor': SVR(),
+    'Gradient Boosting Regressor': GradientBoostingRegressor(random_state=42)
+}
+model_performance = []
+model_predictions = {}
+
+# Train models and evaluate
+for model_name, model in models.items():
+    model.fit(X, y)
+    y_pred = model.predict(X)
+    mse = mean_squared_error(y, y_pred)
+    r2 = r2_score(y, y_pred)
+    model_performance.append({
+        'Model': model_name,
+        'Mean Squared Error (MSE)': mse,
+        'R² Score': r2
+    })
+    model_predictions[model_name] = y_pred
+
+# Convert performance data to DataFrame
+performance_df = pd.DataFrame(model_performance)
+
+# Display model performance
+st.write("### Model Comparison")
+st.dataframe(performance_df)
+
+# Plot model predictions
+st.write("### Model Prediction Visualization")
+for model_name, y_pred in model_predictions.items():
+    fig = px.scatter(
+        x=y, 
+        y=y_pred, 
+        title=f'{model_name} - Actual vs Predicted Carbon Emission',
+        labels={'x': 'Actual Carbon Emission (kg CO2)', 'y': 'Predicted Carbon Emission (kg CO2)'},
+        template='plotly_dark'
+    )
+    fig.update_traces(mode='markers', marker=dict(size=8, color='rgba(219, 64, 82, 0.8)'))
+    fig.update_layout(
+        xaxis_title='Actual Carbon Emission (kg CO2)',
+        yaxis_title='Predicted Carbon Emission (kg CO2)'
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# Plot model performance comparison
+st.subheader("📊 Bar Chart: Model Performance Comparison")
+bar_chart_performance = go.Figure()
+bar_chart_performance.add_trace(go.Bar(
+    x=performance_df['Model'], 
+    y=performance_df['Mean Squared Error (MSE)'],
+    name='Mean Squared Error',
+    marker_color='lightskyblue'
+))
+bar_chart_performance.add_trace(go.Bar(
+    x=performance_df['Model'], 
+    y=performance_df['R² Score'],
+    name='R² Score',
+    marker_color='lightgreen'
+))
+bar_chart_performance.update_layout(barmode='group', template='plotly_dark', title="Model Performance: MSE vs R² Score")
+st.plotly_chart(bar_chart_performance, use_container_width=True)
+
+# Identify and display the best model
+best_model_name = performance_df.loc[performance_df['Mean Squared Error (MSE)'].idxmin(), 'Model']
+st.write(f"### Best Model Based on Lowest MSE: {best_model_name}")
+
+# Insights for turning off nodes
+st.subheader("🔌 Insights on Turning Off Unused Nodes")
+st.write("""
+To optimize your CI/CD pipeline and reduce carbon emissions, consider the following tips:
+
+1. **Monitor Node Usage**: Use monitoring tools to track which nodes are actively being used. Nodes that are rarely used or idle can be turned off to save resources.
+
+2. **Automate Scaling**: Implement auto-scaling mechanisms that automatically adjust the number of nodes based on the current workload. This ensures that only necessary nodes are active.
+
+3. **Schedule Jobs Wisely**: Schedule jobs to run during off-peak hours when possible. This reduces the number of nodes required at peak times.
+
+4. **Use Spot Instances**: Consider using spot instances or on-demand instances that can be turned off when not needed, as they are often more cost-effective and reduce resource waste.
+
+5. **Consolidate Jobs**: Combine multiple jobs into fewer pipelines to reduce the number of active nodes. Efficient job scheduling can help minimize the time nodes are in use.
+
+Implementing these practices can lead to significant savings in both operational costs and carbon emissions.
+""")
+
+# Final message
+st.success("Jenkins CI/CD pipeline simulation complete! Check the visualizations and insights above.")
