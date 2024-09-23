@@ -217,4 +217,7 @@ fig = px.line(
     title='Comparison of Carbon Emissions: CI/CD vs Car Running Time',
     template='plotly_dark'
 )
-st.plotly_chart
+st.plotly_chart(fig, use_container_width=True)
+
+# Final message
+st.success("Mock CI/CD pipeline simulation, model comparison, and design diagram complete! Check the visualizations and data above.")
