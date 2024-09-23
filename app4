@@ -1,0 +1,152 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+import time
+from sklearn.linear_model import LinearRegression
+import plotly.express as px
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+from graphviz import Digraph
+
+# Custom CSS for sidebar and app layout
+st.markdown(
+    """
+    <style>
+    body {
+        background: url('https://cdn.pixabay.com/photo/2015/12/01/20/28/forest-1072828_1280.jpg');
+        background-size: cover;
+        background-attachment: fixed;
+        color: white;
+    }
+    .stApp {
+        background-color: rgba(0, 100, 0, 0.4);
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: #d0f0c0;
+    }
+    .stSidebar {
+        background-color: black;
+        color: white;
+    }
+    .css-1v3fvcr {
+        background-color: black;
+    }
+    .css-1v3fvcr .stSlider > div > div {
+        background-color: black;
+        color: white;
+    }
+    .css-1v3fvcr .stSlider > div > div > div > div {
+        background-color: black;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Set up Matplotlib to use a black background with white text
+plt.style.use('dark_background')
+
+# Title of the app
+st.title("🌲 Jenkins CI/CD Mock Execution - Carbon Emission Tracker 🌿")
+st.write("This app mocks Jenkins CI/CD execution time and CPU usage, simulates a model, and computes linear carbon emissions based on CPU and time usage.")
+
+# Sidebar input widgets for mocking CI/CD parameters
+st.sidebar.header("CI/CD Pipeline Mock Parameters")
+execution_time = st.sidebar.slider("Execution Time (minutes)", 1, 120, 30)
+cpu_usage = st.sidebar.slider("Average CPU Usage (%)", 1, 100, 50)
+
+# Mock Jenkins CI/CD execution time and CPU usage data
+data_points = 100
+np.random.seed(42)
+time_data = np.random.normal(loc=execution_time, scale=5, size=data_points).clip(1, 120)
+cpu_data = np.random.normal(loc=cpu_usage, scale=10, size=data_points).clip(1, 100)
+
+# Create a DataFrame for visualization
+mock_data = pd.DataFrame({
+    'Execution Time (minutes)': time_data,
+    'CPU Usage (%)': cpu_data,
+})
+
+# Simulate training a model to compute carbon emissions
+st.subheader("📊 Mock Data Generation and Model Training")
+st.write("The model will compute carbon emissions based on CPU usage and execution time.")
+
+# Simulate training time
+progress_bar = st.progress(0)
+train_time = 3  # in seconds
+for i in range(train_time):
+    progress_bar.progress((i + 1) / train_time)
+    time.sleep(1)
+
+# Linear model for carbon emissions
+st.write("### Training a Linear Model for Carbon Emissions")
+X = mock_data[['Execution Time (minutes)', 'CPU Usage (%)']]
+y = X.sum(axis=1) * 0.05  # Simplified assumption: emissions = 0.05 * (CPU + Time)
+
+model = LinearRegression()
+model.fit(X, y)
+
+mock_data['Carbon Emission (kg CO2)'] = model.predict(X)
+
+# Advanced Visualization: Execution Time vs CPU Usage vs Carbon Emission (Interactive Plotly)
+st.subheader("🔍 CI/CD Execution and Carbon Emission Interactive Visualization")
+st.write("Below is the interactive visualization of mocked execution time, CPU usage, and corresponding carbon emissions:")
+
+# Plotly Scatter plot for interactive visualization
+fig = px.scatter(
+    mock_data, 
+    x='Execution Time (minutes)', 
+    y='CPU Usage (%)', 
+    color='Carbon Emission (kg CO2)', 
+    title='Execution Time vs CPU Usage vs Carbon Emission',
+    labels={'Execution Time (minutes)': 'Execution Time (min)', 'CPU Usage (%)': 'CPU Usage (%)'},
+    template='plotly_dark'
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# Advanced Chart: Bar chart comparing Execution Time and CPU Usage
+st.subheader("📊 Bar Chart: Execution Time vs CPU Usage")
+bar_chart = go.Figure(data=[
+    go.Bar(name='Execution Time (minutes)', x=mock_data.index, y=mock_data['Execution Time (minutes)'], marker_color='lightskyblue'),
+    go.Bar(name='CPU Usage (%)', x=mock_data.index, y=mock_data['CPU Usage (%)'], marker_color='lightgreen')
+])
+bar_chart.update_layout(barmode='group', template='plotly_dark', title="Execution Time vs CPU Usage")
+st.plotly_chart(bar_chart, use_container_width=True)
+
+# Line chart for carbon emissions with dark background (interactive)
+st.write("### Carbon Emission over Time (Interactive)")
+line_chart = px.line(mock_data, y='Carbon Emission (kg CO2)', title="Carbon Emission Over Time", template='plotly_dark')
+st.plotly_chart(line_chart, use_container_width=True)
+
+# Show summary statistics
+st.write("### Summary Statistics")
+st.write(mock_data.describe())
+
+# Flowchart for Jenkins CI/CD Pipeline Execution using Graphviz
+st.subheader("🛠️ Flowchart of Jenkins CI/CD Execution")
+st.write("The flowchart below summarizes the key steps of a typical Jenkins CI/CD pipeline execution.")
+
+# Create flowchart using graphviz
+flowchart = Digraph(comment='CI/CD Pipeline')
+
+# Define nodes in the flowchart
+flowchart.node('A', 'Start Jenkins Job')
+flowchart.node('B', 'Checkout Code')
+flowchart.node('C', 'Build Code')
+flowchart.node('D', 'Run Tests')
+flowchart.node('E', 'Deploy to Environment')
+flowchart.node('F', 'End')
+
+# Define edges between nodes
+flowchart.edge('A', 'B')
+flowchart.edge('B', 'C')
+flowchart.edge('C', 'D')
+flowchart.edge('D', 'E')
+flowchart.edge('E', 'F')
+
+# Display flowchart in Streamlit
+st.graphviz_chart(flowchart)
+
+# Final message
+st.success("Mock CI/CD pipeline simulation complete! Check the visualizations and data above.")
