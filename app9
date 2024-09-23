@@ -157,6 +157,10 @@ bar_chart_performance.add_trace(go.Bar(
 bar_chart_performance.update_layout(barmode='group', template='plotly_dark', title="Model Performance: MSE vs R² Score")
 st.plotly_chart(bar_chart_performance, use_container_width=True)
 
+# Identify the best model based on the lowest MSE
+best_model_name = performance_df.loc[performance_df['Mean Squared Error (MSE)'].idxmin(), 'Model']
+st.write(f"### Best Model Based on Lowest MSE: {best_model_name}")
+
 # Design Diagram of the Logic
 st.subheader("🧩 Design Diagram of the App Logic")
 st.write("The design diagram below illustrates the flow of data and processes in the app.")
